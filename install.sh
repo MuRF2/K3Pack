@@ -6,6 +6,8 @@ python3 -m venv K3Pack-env
 source ./K3Pack-env/bin/activate
 pip install -r requirements.txt
 pyinstaller --onefile main.py
-mv ./dist/main ./K3Pack
+mkdir -p /home/$USER/.k3pack
+mv ./dist/main /home/$USER/.k3pack
 deactivate
+rm -r ../K3Pack
 
