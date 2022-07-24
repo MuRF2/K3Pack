@@ -1,16 +1,44 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import argparse
+import requests
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+version_number = '0.1'
+url=""
 
 
-# Press the green button in the gutter to run the script.
+def arguments():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
+                        help='K3Pack is an easy to use packet manager written in Python. '
+                             'Actually just a fun project.')
+    parser.add_argument('-v', '--version', action='version', default=argparse.SUPPRESS,
+                        version="Version {} is installed.".format(version_number), help='show version number')
+    parser.add_argument("main_operator", type=str, choices=["install", "uninstall", "list-installed",
+                                                            "list-available", "update"],
+                        help="main operator to be selected")
+    args = parser.parse_args()
+    print(args.main_operator)
+
+    return parser.parse_args()
+
+
+class PackageList:
+    def __init__(self):
+        return
+
+    def download(self, url, filename):
+        return
+
+
+
+def install(operator):
+    return "test"
+
+
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    print(arguments())
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+
+
+
