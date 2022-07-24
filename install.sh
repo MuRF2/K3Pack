@@ -7,7 +7,8 @@ source ./K3Pack-env/bin/activate
 pip install -r requirements.txt
 pyinstaller --onefile main.py
 mkdir -p /home/$USER/.k3pack
-mv ./dist/main /home/$USER/.k3pack/k3pack
+mv ./dist/main ./dist/k3pack
+mv ./dist/k3pack /home/$USER/.k3pack
 deactivate
 rm -r ../K3Pack
 
