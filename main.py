@@ -4,7 +4,7 @@ import requests
 from requests import get
 
 version_number = '0.1'
-g_url = "https://raw.githubusercontent.com/MuRF2/K3Pack/master/packages_list"
+g_package_list_file_url = "https://raw.githubusercontent.com/MuRF2/K3Pack/master/packages_list"
 g_package_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/package_list_file'
 g_installed_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/installed_list_file'
 
@@ -19,44 +19,17 @@ def arguments():
     parser.add_argument("main_operator", type=str, choices=["install", "uninstall", "list-installed",
                                                             "list-available", "update"],
                         help="main operator to be selected")
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
-class PackageList:
-
-    @staticmethod
-    def download(file_path, url):
-        with open(file_path, "wb") as file:
-            try:
-                response = get(url)
-                file.write(response.content)
-            except requests.exceptions.ConnectionError as e:
-                print('An error occurred during packet list download')
-                raise SystemExit(e)
-
-    def __init__(self):
-        self.__c_url = None
-        self.__c_package_list_file_path = None
-        self.__c_package_list_file = None
-
-    def set_file_path(self, path):
-        self.__c_package_list_file_path = path
-
-    def get_file_path(self):
-        return self.__c_package_list_file_path
-
-    def set_url(self, url):
-        self.__c_url = url
-
-    def get_url(self):
-        return self.__c_url
-
-    def set_file(self, file):
-        self.__c_package_list_file = file
-
-    def get_file(self):
-        return self.__c_package_list_file
+def download(file_path, url):
+    with open(file_path, "wb") as file:
+        try:
+            response = get(url)
+            file.write(response.content)
+        except requests.exceptions.ConnectionError as e:
+            print('An error occurred during packet list download')
+            raise SystemExit(e)
 
 
 def install(operator):
@@ -64,21 +37,16 @@ def install(operator):
 
 
 if __name__ == '__main__':
-    parsed_argument = arguments()
 
-    ThePackageList = PackageList()
-    ThePackageList.set_file_path(g_package_list_file_path)
-    ThePackageList.set_url(g_url)
-
-    if parsed_argument.main_operator == 'update':
-        ThePackageList.download(ThePackageList.get_file_path(), ThePackageList.get_url())
-    elif parsed_argument.main_operator == 'install':
+    if arguments().main_operator == 'update':
+        download(g_package_list_file_path, g_package_list_file_url)
+    elif arguments().main_operator == 'install':
         print('install')
-    elif parsed_argument.main_operator == 'uninstall':
+    elif arguments().main_operator == 'uninstall':
         print('uninstall')
-    elif parsed_argument.main_operator == 'list-installed':
+    elif arguments().main_operator == 'list-installed':
         print('list-installed')
-    elif parsed_argument.main_operator == 'list-available':
+    elif arguments().main_operator == 'list-available':
         print('list-available')
 
 
