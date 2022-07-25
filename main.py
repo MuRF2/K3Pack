@@ -1,25 +1,12 @@
 import getpass
 import argparse
-import filecmp
-
 import requests
 from requests import get
 
 version_number = '0.1'
 g_url = "https://raw.githubusercontent.com/MuRF2/K3Pack/master/packages_list"
 g_package_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/package_list_file'
-
-
-def modify_package_list_file(file_path):
-    lines = ['Readme', 'How to write text files in Python']
-    with open(file_path, 'a') as f:
-        for line in lines:
-            f.write(line)
-            f.write('\n')
-
-
-def compare(f1, f2):
-    return filecmp.cmp(f1, f2, shallow=False)
+g_installed_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/installed_list_file'
 
 
 def arguments():
@@ -47,10 +34,6 @@ class PackageList:
             except requests.exceptions.ConnectionError as e:
                 print('An error occurred during packet list download')
                 raise SystemExit(e)
-
-    @staticmethod
-    def load(file_path):
-        return
 
     def __init__(self):
         self.__c_url = None
