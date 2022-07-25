@@ -1,2 +1,2 @@
-testtesttest
-test
+{ "name":"HelloWorld", "url":"https://raw.githubusercontent.com/MuRF2/toolbox/main/HelloWorld.sh", "version":1, "various":"-"}
+{ "name":"ll", "https://raw.githubusercontent.com/MuRF2/toolbox/main/ll.sh", "version":1, "various":"-"}

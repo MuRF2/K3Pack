@@ -1,12 +1,22 @@
+import os
 import getpass
 import argparse
 import requests
 from requests import get
+import json
 
 version_number = '0.1'
 g_package_list_file_url = "https://raw.githubusercontent.com/MuRF2/K3Pack/master/packages_list"
 g_package_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/package_list_file'
 g_installed_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/installed_list_file'
+g_install_folder_path = '/home/' + getpass.getuser() + '/.k3pack/installed'
+
+
+def create_folder(path):
+    try:
+        os.mkdir(path)
+    except OSError as error:
+        print(error)
 
 
 def arguments():
@@ -32,6 +42,19 @@ def download(file_path, url):
             raise SystemExit(e)
 
 
+def parse_json(x_json):
+    return json.loads(x_json)
+
+
+def load_installed_packages(path):
+    d = {}
+    with open(path) as f:
+        for line in f:
+            (key, val) = line.strip().split(',')
+            d[key] = val
+    print (d)
+
+
 def install(operator):
     return "test"
 
@@ -49,7 +72,9 @@ if __name__ == '__main__':
     elif arguments().main_operator == 'list-available':
         print('list-available')
 
-
+    # create folder for installations
+    # create_folder(g_install_folder_path)
+    load_installed_packages(g_package_list_file_path)
 
 
 
