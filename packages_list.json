@@ -10,7 +10,7 @@
     "package2":[
         {
             "name":"ll",
-            "https://raw.githubusercontent.com/MuRF2/toolbox/main/ll.sh",
+            "url":"https://raw.githubusercontent.com/MuRF2/toolbox/main/ll.sh",
             "version":1,
             "various":"-"
         }
