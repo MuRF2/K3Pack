@@ -1,6 +1,8 @@
 import getpass
 import argparse
 import filecmp
+
+import requests
 from requests import get
 
 version_number = '0.1'
@@ -39,8 +41,12 @@ class PackageList:
     @staticmethod
     def download(file_path, url):
         with open(file_path, "wb") as file:
-            response = get(url)
-            file.write(response.content)
+            try:
+                response = get(url)
+                file.write(response.content)
+            except requests.exceptions.ConnectionError as e:
+                print('An error occurred during packet list download')
+                raise SystemExit(e)
 
     @staticmethod
     def load(file_path):
