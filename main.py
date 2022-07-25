@@ -41,7 +41,7 @@ def arguments():
     return parser.parse_args()
 
 
-def refresh_package_list(file_path, url):
+def refresh_package_list(file_path: str, url: str):
     delete_file(file_path)
     download(file_path, url)
     print('Package list updated.')
@@ -54,57 +54,79 @@ def delete_file(path):
         pass
 
 
-def download(file_path, url):
+def download(file_path: str, url: str):
+    """
+
+    :param file_path:
+    :param url:
+    """
     with open(file_path, "wb") as file:
         try:
             response = get(url)
             file.write(response.content)
         except requests.exceptions.ConnectionError as e:
-            print('An error occurred during download.')
+            print('ERROR: An error occurred during download.')
             raise SystemExit(e)
 
 
-def parse_json_file(path):
+def parse_json_file(path: str) -> dict:
+    """
+    This function opens the file in json format specified with the path string and reads it into a dictionary.
+    The .json file should be formatted as follows:
+    {
+        "package1":[
+             {
+                "name":"HelloWorld",
+                "url":"https://yoururl.com",
+                "version":1,
+                "various":"-"
+            }
+        ]
+    }
+    The output dictionary would be:
+    {'package1': [{'name': 'HelloWorld', 'url': 'https://yoururl.com', 'version': 1, 'various': '-'}]}
+    :param path:
+    :return: for k3pack parsed dictionary
+    """
     try:
         with open(path, 'r') as json_file:
             d = json.load(json_file)
         return d
     except OSError as error:
-        print(error)
-        print('File not found, maybe you need to update the package list first?')
+        print('ERROR: File not found, maybe you need to update the package list first?')
+
+
+def get_package_url(dictionary: dict, package_name: str) -> str:
+    """
+    This function searches in a provided dictionary for the given name string for the matching url string.
+    The given dictionary should be parsed using def parse_json_file(path: str) -> dict.
+    :param dictionary: parsed by def parse_json_file(path: str) -> dict
+    :param package_name: search name - type: str
+    :return: url - type: str
+    """
+    for x in range(0, len(dictionary.items())):
+        for y in list(dictionary.items())[x][1]:
+            if y['name'] == package_name:
+                return y['url']
 
 
 def install(package_name):
-    packages = parse_json_file(g_package_list_file_path)
-    available_flag = False
-    size = len(packages.items())
-    for x in range(0, size):
-        value = list(packages.items())[x][1]
-        for y in value:
-            if y['name'] == package_name:
-                available_flag = True
-    if not available_flag:
-        print("Package could not be found. List all available packages with ./k3pack list-available")
+    d = parse_json_file(g_package_list_file_path)
+    url = get_package_url(d, package_name)
+    if url is None:
+        print('ERROR: Package could not be found. List all available packages with ./k3pack list-available')
+    if url is not None:
+        print(url)
 
 
 def list_available():
-    print_package_names(parse_json_file(g_package_list_file_path))
+    print_package_names_and_version(parse_json_file(g_package_list_file_path))
 
 
-def print_package_names(dictionary):
-    size = len(dictionary.items())
-    for x in range(0, size):
-        value = list(dictionary.items())[x][1]
-        for y in value:
+def print_package_names_and_version(dictionary):
+    for x in range(0, len(dictionary.items())):
+        for y in list(dictionary.items())[x][1]:
             print(y['name'] + " version: " + str(y['version']))
-
-
-def print_my_dictionary_value(dictionary, part):
-    size = len(dictionary.items())
-    for x in range(0, size):
-        value = list(dictionary.items())[x][1]
-        for y in value:
-            print(y[part])
 
 
 if __name__ == '__main__':
@@ -112,18 +134,14 @@ if __name__ == '__main__':
     if arguments().main_operator == 'update':
         refresh_package_list(g_package_list_file_path, g_package_list_file_url)
     elif arguments().main_operator == 'install':
-        create_folder(g_install_folder_path)
-        install(arguments().package.pop())
+        try:
+            install(arguments().package.pop())
+        except AttributeError as error:
+            print('ERROR: parameter install needs another attribute')
+
     elif arguments().main_operator == 'uninstall':
         print('uninstall')
     elif arguments().main_operator == 'list-installed':
         print('list-installed')
     elif arguments().main_operator == 'list-available':
         list_available()
-
-    # create folder for installations
-    # create_folder(g_install_folder_path)
-
-
-
-
