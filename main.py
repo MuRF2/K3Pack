@@ -32,6 +32,18 @@ def arguments():
     return parser.parse_args()
 
 
+def refresh_package_list(file_path, url):
+    delete_file(file_path)
+    download(file_path, url)
+
+
+def delete_file(path):
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+
+
 def download(file_path, url):
     with open(file_path, "wb") as file:
         try:
@@ -47,13 +59,12 @@ def parse_json(x_json):
 
 
 def load_installed_packages(path):
-    d = {}
-    with open(path) as f:
-        for line in f:
-            (key, val) = line.strip().split(',')
-            d[key] = val
-    print (d)
+    with open(path) as json_file:
+        data = json.load(json_file)
 
+        print("Type:", type(data))
+
+        print("\nname")
 
 def install(operator):
     return "test"
@@ -62,7 +73,7 @@ def install(operator):
 if __name__ == '__main__':
 
     if arguments().main_operator == 'update':
-        download(g_package_list_file_path, g_package_list_file_url)
+        refresh_package_list(g_package_list_file_path, g_package_list_file_url)
     elif arguments().main_operator == 'install':
         print('install')
     elif arguments().main_operator == 'uninstall':
