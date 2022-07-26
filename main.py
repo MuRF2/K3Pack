@@ -9,7 +9,7 @@ import re
 version_number = '0.1'
 g_package_list_file_url = "https://raw.githubusercontent.com/MuRF2/K3Pack/master/packages_list.json"
 g_package_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/package_list_file.json'
-g_installed_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/installed/installed_list_file'
+g_installed_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/installed/installed_list_file.json'
 g_install_folder_path = '/home/' + getpass.getuser() + '/.k3pack/installed/'
 
 
@@ -89,16 +89,34 @@ def parse_json_file(path: str) -> dict:
             d = json.load(json_file)
         return d
     except OSError as error:
-        print('ERROR: File not found, maybe you need to update the package list first?')
+        print('ERROR: File not found.')
+
+
+def reverse_parse_json_file(dictionary: dict, path: str):
+    """
+    This function reads in a dictionary and passes it to a json file. The Dictionary will be attached to the file.
+    :param dictionary: values which will be parsed to json file
+    :param path: storage location of new created file - type: str
+    """
+    with open(path, 'a') as file:
+        json.dump(dictionary, file, indent=2)
+
+
+def get_sub_dictionary_by_package_name(dictionary, package_name):
+    for x in range(0, len(dictionary.items())):
+        for y in list(dictionary.items())[x][1]:
+            if y['name'] == package_name:
+                return dict(zip(list(dictionary.items())[x][0], list(dictionary.items())[x][1]))
 
 
 def get_package_url(dictionary: dict, package_name: str) -> str:
     """
     This function searches in a provided dictionary for the given name string for the matching url string.
     The given dictionary should be parsed using def parse_json_file(path: str) -> dict.
+    If no matching package name is found, None is returned.
     :param dictionary: parsed by def parse_json_file(path: str) -> dict
     :param package_name: search name - type: str
-    :return: url - type: str
+    :return: url - type: str or None
     """
     for x in range(0, len(dictionary.items())):
         for y in list(dictionary.items())[x][1]:
@@ -157,6 +175,19 @@ if __name__ == '__main__':
             print('ERROR: parameter install needs another attribute')
     elif arguments().main_operator == 'uninstall':
         print('uninstall')
+        data = parse_json_file(g_package_list_file_path)
+        print(data)
+        data2 = get_sub_dictionary_by_package_name(data, 'HelloWorld')
+        print(data2)
+        print('---------get url')
+        print(get_package_url(data2, 'HelloWorld'))
+
+        #list1 = list(data.items())[0][0]
+        #list2 = list(data.items())[0][1]
+
+        #print(list1)
+        #print(list2)
+
     elif arguments().main_operator == 'list-installed':
         print('list-installed')
     elif arguments().main_operator == 'list-available':
