@@ -1,4 +1,5 @@
 import os
+import logging
 import getpass
 import argparse
 import requests
@@ -11,6 +12,8 @@ g_package_list_file_url = "https://raw.githubusercontent.com/MuRF2/K3Pack/master
 g_package_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/package_list_file.json'
 g_installed_list_file_path = '/home/' + getpass.getuser() + '/.k3pack/installed/installed_list_file.json'
 g_install_folder_path = '/home/' + getpass.getuser() + '/.k3pack/installed/'
+
+logger = logging.getLogger(__name__)
 
 
 def arguments():
@@ -70,26 +73,38 @@ def parse_json_file(path: str) -> dict:
     This function opens the file in json format specified with the path string and reads it into a dictionary.
     The .json file should be formatted as follows:
     {
-        "package1":[
+        "package1":
              {
                 "name":"HelloWorld",
                 "url":"https://yoururl.com",
                 "version":1,
                 "various":"-"
             }
-        ]
     }
     The output dictionary would be:
-    {'package1': [{'name': 'HelloWorld', 'url': 'https://yoururl.com', 'version': 1, 'various': '-'}]}
+    {'package1': {'name': 'HelloWorld', 'url': 'https://raw.githubusercontent.com/MuRF2/toolbox/main/HelloWorld.sh', 'version': 1, 'various': '-'}}
     :param path: storage location of json file
-    :return: for k3pack parsed dictionary
+    :return: dict...
     """
     try:
         with open(path, 'r') as json_file:
             d = json.load(json_file)
         return d
-    except OSError as error:
-        print('ERROR: File not found.')
+    except FileNotFoundError as error:
+        logger.error(error)
+        raise
+
+
+def get_sub_dict_by_package_name(dictionary: dict, package_name: str) -> dict or None:
+    """
+
+    :param dictionary:
+    :param package_name:
+    :return: dict or None
+    """
+    for key in dictionary:
+        if dictionary[key]['name'] == package_name:
+            return {key: dictionary[key]}
 
 
 def reverse_parse_json_file(dictionary: dict, path: str):
@@ -98,46 +113,27 @@ def reverse_parse_json_file(dictionary: dict, path: str):
     :param dictionary: values which will be parsed to json file
     :param path: storage location of new created file - type: str
     """
-    with open(path, 'a') as file:
-        json.dump(dictionary, file, indent=2)
+    try:
+        with open(path, "r") as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        print('creating package file, initialization...')
+        with open(path, "a") as file:
+            json.dump(dictionary, file, indent=2)
+    else:
+        data.update(dictionary)
+        with open(path, "w") as file:
+            json.dump(data, file, indent=2)
 
 
-def get_sub_dictionary_by_package_name(dictionary, package_name):
-    for x in range(0, len(dictionary.items())):
-        for y in list(dictionary.items())[x][1]:
-            if y['name'] == package_name:
-                return dict(zip(list(dictionary.items())[x][0], list(dictionary.items())[x][1]))
-
-
-def get_package_url(dictionary: dict, package_name: str) -> str:
-    """
-    This function searches in a provided dictionary for the given name string for the matching url string.
-    The given dictionary should be parsed using def parse_json_file(path: str) -> dict.
-    If no matching package name is found, None is returned.
-    :param dictionary: parsed by def parse_json_file(path: str) -> dict
-    :param package_name: search name - type: str
-    :return: url - type: str or None
-    """
-    for x in range(0, len(dictionary.items())):
-        for y in list(dictionary.items())[x][1]:
-            if y['name'] == package_name:
-                return y['url']
-
-
-def get_package_name(dictionary):
-    for x in range(0, len(dictionary.items())):
-        for y in list(dictionary.items())[x][1]:
-            return y['name']
+def get_package_url(dictionary: dict, package_name: str) -> str or None:
+    for key in dictionary:
+        if dictionary[key]['name'] == package_name:
+            return dictionary[key]['url']
 
 
 def get_package_name_from_url(url):
     return re.findall('([^\/]+)\/?$', url).pop()
-
-
-def print_package_names_and_version(dictionary):
-    for x in range(0, len(dictionary.items())):
-        for y in list(dictionary.items())[x][1]:
-            print(y['name'] + " version: " + str(y['version']))
 
 
 def refresh_package_list(file_path: str, url: str):
@@ -148,20 +144,35 @@ def refresh_package_list(file_path: str, url: str):
 
 def install(package_name):
     d = parse_json_file(g_package_list_file_path)
+    try:
+        i = parse_json_file(g_installed_list_file_path)
+    except FileNotFoundError:
+        pass
     url = get_package_url(d, package_name)
     if url is None:
         print('ERROR: Package could not be found. List all available packages with ./k3pack list-available')
     if url is not None:
         if os.path.exists(g_install_folder_path + get_package_name_from_url(url)) is True:
-            # check version in installed_package_file
             print("File / program already installed.")
         else:
             download(g_install_folder_path + get_package_name_from_url(url), url)
             print("downloaded...")
+            reverse_parse_json_file(get_sub_dict_by_package_name(d, package_name), g_installed_list_file_path)
+
+
+def list_installed():
+    try:
+        i = parse_json_file(g_installed_list_file_path)
+        for key in i:
+            print(i[key]['name'] + ' version: ' + i[key]['version'])
+    except FileNotFoundError:
+        print('No package installed')
 
 
 def list_available():
-    print_package_names_and_version(parse_json_file(g_package_list_file_path))
+    d = parse_json_file(g_package_list_file_path)
+    for key in d:
+        print(d[key]['name'] + ' version: ' + d[key]['version'])
 
 
 if __name__ == '__main__':
@@ -175,20 +186,7 @@ if __name__ == '__main__':
             print('ERROR: parameter install needs another attribute')
     elif arguments().main_operator == 'uninstall':
         print('uninstall')
-        data = parse_json_file(g_package_list_file_path)
-        print(data)
-        data2 = get_sub_dictionary_by_package_name(data, 'HelloWorld')
-        print(data2)
-        print('---------get url')
-        print(get_package_url(data2, 'HelloWorld'))
-
-        #list1 = list(data.items())[0][0]
-        #list2 = list(data.items())[0][1]
-
-        #print(list1)
-        #print(list2)
-
     elif arguments().main_operator == 'list-installed':
-        print('list-installed')
+        list_installed()
     elif arguments().main_operator == 'list-available':
         list_available()
