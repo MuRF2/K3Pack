@@ -2,19 +2,19 @@
     "package1": {
             "name":"HelloWorld",
             "url":"https://raw.githubusercontent.com/MuRF2/toolbox/main/HelloWorld.sh",
-            "version":1,
+            "version":"1",
             "various":"-"
         },
     "package2": {
             "name":"ll",
             "url":"https://raw.githubusercontent.com/MuRF2/toolbox/main/ll.sh",
-            "version":1,
+            "version":"1",
             "various":"-"
         },
     "package3": {
             "name":"test",
             "url":"test.de",
-            "version":1,
+            "version":"1",
             "various":"-"
         }
 }
