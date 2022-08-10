@@ -13,9 +13,9 @@
         },
     "package3": {
             "name":"depack",
-            "url":"https://github.com/MuRF2/depack/releases/download/v0.1/depack",
+            "url":"https://raw.githubusercontent.com/MuRF2/depack/master/main.py",
             "version":"0.1",
-            "various":"-"
+            "various":{"setup":"mv /home/$USER/.k3pack/installed/main.py /home/$USER/.k3pack/installed/depack.py"}
         }
 }
 
