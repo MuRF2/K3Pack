@@ -33,23 +33,30 @@ def arguments():
                         help="package name for install and uninstall argument")
     parser.add_argument("main_operator",
                         type=str,
-                        choices=["install", "uninstall", "list-installed", "list-available", "update"],
+                        choices=["install", "uninstall", "list-installed", "list-available", "update", "test"],
                         help="main operator to be selected")
     return parser.parse_args()
+
+
+def init():
+    if os.path.exists(g_install_folder_path) is not True:
+        create_folder(g_install_folder_path)
+    if os.path.exists(g_package_list_file_path) is not True:
+        refresh_package_list(g_package_list_file_path, g_package_list_file_url)
 
 
 def delete_file(path):
     try:
         os.remove(path)
-    except OSError:
-        pass
+    except OSError as e:
+        print(e)
 
 
 def create_folder(path):
     try:
         os.mkdir(path)
-    except OSError as error:
-        print(error)
+    except OSError as e:
+        print(e)
 
 
 def download(file_path: str, url: str):
@@ -65,7 +72,8 @@ def download(file_path: str, url: str):
             file.write(response.content)
         except requests.exceptions.ConnectionError as e:
             print('ERROR: An error occurred during download.')
-            raise SystemExit(e)
+            logger.error(e)
+            raise
 
 
 def parse_json_file(path: str) -> dict:
@@ -90,21 +98,19 @@ def parse_json_file(path: str) -> dict:
         with open(path, 'r') as json_file:
             d = json.load(json_file)
         return d
-    except FileNotFoundError as error:
-        logger.error(error)
+    except FileNotFoundError as e:
+        print('Empty or no installed packages file.')
+        logger.error(e)
         raise
 
 
-def get_sub_dict_by_package_name(dictionary: dict, package_name: str) -> dict or None:
-    """
-
-    :param dictionary:
-    :param package_name:
-    :return: dict or None
-    """
+def get_sub_dict_by_package_name(dictionary: dict, package_name: str, depth: int) -> dict or None:
     for key in dictionary:
         if dictionary[key]['name'] == package_name:
-            return {key: dictionary[key]}
+            if depth == 1:
+                return {key: dictionary[key]}
+            if depth == 2:
+                return dictionary[key]
 
 
 def reverse_parse_json_file(dictionary: dict, path: str):
@@ -117,7 +123,6 @@ def reverse_parse_json_file(dictionary: dict, path: str):
         with open(path, "r") as file:
             data = json.load(file)
     except FileNotFoundError:
-        print('creating package file, initialization...')
         with open(path, "a") as file:
             json.dump(dictionary, file, indent=2)
     else:
@@ -126,14 +131,40 @@ def reverse_parse_json_file(dictionary: dict, path: str):
             json.dump(data, file, indent=2)
 
 
-def get_package_url(dictionary: dict, package_name: str) -> str or None:
-    for key in dictionary:
-        if dictionary[key]['name'] == package_name:
-            return dictionary[key]['url']
+def get_package_url(dictionary: dict) -> str:
+    return dictionary['url']
+
+
+def get_package_name(dictionary:dict) -> str:
+    return dictionary['name']
 
 
 def get_package_name_from_url(url):
     return re.findall('([^\/]+)\/?$', url).pop()
+
+
+def get_package_num(d, package_name):
+    return list(get_sub_dict_by_package_name(d, package_name, 1).keys()).pop()
+
+
+def check_if_installed(package_name):
+    d = parse_json_file(g_package_list_file_path)
+    sub_d = get_sub_dict_by_package_name(d, package_name, 2)
+    if sub_d is not None:
+        try:
+            i = parse_json_file(g_installed_list_file_path)
+            package_name_package_num_as_string = get_package_num(d, package_name)
+            all_installed_package_num = list(i.keys())
+            if package_name_package_num_as_string in all_installed_package_num:
+                return True
+            else:
+                return False
+        except FileNotFoundError:
+            print('No packages list of installed programs available')
+            return False
+    else:
+        print('Package does not exist')
+        return False
 
 
 def refresh_package_list(file_path: str, url: str):
@@ -144,20 +175,31 @@ def refresh_package_list(file_path: str, url: str):
 
 def install(package_name):
     d = parse_json_file(g_package_list_file_path)
-    try:
-        i = parse_json_file(g_installed_list_file_path)
-    except FileNotFoundError:
-        pass
-    url = get_package_url(d, package_name)
-    if url is None:
-        print('ERROR: Package could not be found. List all available packages with ./k3pack list-available')
-    if url is not None:
-        if os.path.exists(g_install_folder_path + get_package_name_from_url(url)) is True:
-            print("File / program already installed.")
+    sub_d = get_sub_dict_by_package_name(d, package_name, 2)
+    if sub_d is not None:
+        if check_if_installed(package_name) is not True:
+            print('installing package named "' + sub_d['name'] + '" version "' + sub_d['version'] + '" from "' + sub_d['url'] + '"')
+            download(g_install_folder_path + get_package_name_from_url(sub_d['url']), sub_d['url'])
+            reverse_parse_json_file(get_sub_dict_by_package_name(d, package_name, 1), g_installed_list_file_path)
         else:
-            download(g_install_folder_path + get_package_name_from_url(url), url)
-            print("downloaded...")
-            reverse_parse_json_file(get_sub_dict_by_package_name(d, package_name), g_installed_list_file_path)
+            print('Package already installed')
+    else:
+        print('Package does not exist')
+
+
+def uninstall(package_name):
+    d = parse_json_file(g_package_list_file_path)
+    sub_d = get_sub_dict_by_package_name(d, package_name, 2)
+
+    if check_if_installed(package_name) is True:
+        print('uninstalling package named "' + sub_d['name'] + '" version "' + sub_d['version'] + '"')
+        i = parse_json_file(g_installed_list_file_path)
+        del i[get_package_num(d, package_name)]
+        delete_file(g_installed_list_file_path)
+        delete_file(g_install_folder_path + get_package_name_from_url(sub_d['url']))
+        reverse_parse_json_file(i, g_installed_list_file_path)
+    else:
+        print('Packages is not installed')
 
 
 def list_installed():
@@ -176,17 +218,26 @@ def list_available():
 
 
 if __name__ == '__main__':
-
     if arguments().main_operator == 'update':
+        init()
         refresh_package_list(g_package_list_file_path, g_package_list_file_url)
     elif arguments().main_operator == 'install':
+        init()
         try:
             install(arguments().package.pop())
         except AttributeError as error:
             print('ERROR: parameter install needs another attribute')
     elif arguments().main_operator == 'uninstall':
-        print('uninstall')
+        init()
+        try:
+            uninstall(arguments().package.pop())
+        except AttributeError as error:
+            print('ERROR: parameter uninstall needs another attribute')
     elif arguments().main_operator == 'list-installed':
+        init()
         list_installed()
     elif arguments().main_operator == 'list-available':
+        init()
         list_available()
+    elif arguments().main_operator == 'test':
+        print('test')
