@@ -12,9 +12,9 @@
             "various":"-"
         },
     "package3": {
-            "name":"test",
-            "url":"test.de",
-            "version":"1",
+            "name":"depack",
+            "url":"https://github.com/MuRF2/depack/releases/download/v0.1/depack",
+            "version":"0.1",
             "various":"-"
         }
 }
