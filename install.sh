@@ -1,6 +1,7 @@
 #!/bin/bash
 
 git clone https://github.com/MuRF2/K3Pack
+mkdir -p /home/$USER/.k3pack
 cd ./K3Pack || exit
 python3 -m venv K3Pack-env
 source ./K3Pack-env/bin/activate
