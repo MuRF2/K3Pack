@@ -163,7 +163,7 @@ def check_if_installed(package_name):
             print('No packages list of installed programs available')
             return False
     else:
-        print('Package does not exist')
+        print('package does not exist')
         return False
 
 
@@ -171,6 +171,22 @@ def refresh_package_list(file_path: str, url: str):
     delete_file(file_path)
     download(file_path, url)
     print('Package list updated.')
+
+
+def update(package_name):
+    if check_if_installed(package_name) is True:
+        d = parse_json_file(g_package_list_file_path)
+        sub_d = get_sub_dict_by_package_name(d, package_name, 2)
+        i = parse_json_file(g_installed_list_file_path)
+        sub_i = get_sub_dict_by_package_name(i, package_name, 2)
+        if sub_d['version'] != sub_i['version']:
+            print('Updating package "' + package_name + '" version:"' + sub_i['version'] + '" to version:"' + sub_d['version'] + '"')
+            uninstall(package_name)
+            install(package_name)
+        else:
+            print('No update available')
+    else:
+        print('Package not installed')
 
 
 def install(package_name):
@@ -219,19 +235,21 @@ def list_available():
 
 if __name__ == '__main__':
     if arguments().main_operator == 'update':
-        init()
-        refresh_package_list(g_package_list_file_path, g_package_list_file_url)
+        try:
+            update(arguments().package.pop())
+        except AttributeError:
+            refresh_package_list(g_package_list_file_path, g_package_list_file_url)
     elif arguments().main_operator == 'install':
         init()
         try:
             install(arguments().package.pop())
-        except AttributeError as error:
+        except AttributeError:
             print('ERROR: parameter install needs another attribute')
     elif arguments().main_operator == 'uninstall':
         init()
         try:
             uninstall(arguments().package.pop())
-        except AttributeError as error:
+        except AttributeError:
             print('ERROR: parameter uninstall needs another attribute')
     elif arguments().main_operator == 'list-installed':
         init()
